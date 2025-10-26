@@ -84,7 +84,8 @@ class Game {
         
         const rect = this.canvas.getBoundingClientRect();
         const x = Math.floor((e.clientX - rect.left) / this.cellSize);
-        const y = Math.floor((e.clientY - rect.top) / this.cellSize);
+        const clickY = Math.floor((e.clientY - rect.top) / this.cellSize);
+        const y = this.gameState.height - 1 - clickY;  // Flip Y axis for click detection
         
         const clickedPiece = this.gameState.pieces.find(p => p.loc[0] === x && p.loc[1] === y);
         
@@ -436,7 +437,7 @@ class Game {
             'black': 'rgba(50, 50, 50, 0.6)',
             'white': 'rgba(240, 240, 255, 0.6)'
         };
-        return colorMap[colorName] || 'rgba(180, 180, 180, 0.6)';
+        return colorMap[colorName] || 'rgba(180, 180, 180, 0.9)';
     }
     
     render() {
@@ -452,35 +453,37 @@ class Game {
         // Clear canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Draw color grid
+        // Draw color grid (flipped so Player 0 at bottom)
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
                 const color = this.gameState.color_grid[y][x];
                 this.ctx.fillStyle = this.getColor(color);
-                this.ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
+                const renderY = (height - 1 - y) * this.cellSize;  // Flip Y axis
+                this.ctx.fillRect(x * this.cellSize, renderY, this.cellSize, this.cellSize);
                 
                 // Draw grid lines
                 this.ctx.strokeStyle = 'rgba(178, 178, 191, 0.3)';
                 this.ctx.lineWidth = 1;
-                this.ctx.strokeRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
+                this.ctx.strokeRect(x * this.cellSize, renderY, this.cellSize, this.cellSize);
             }
         }
         
         // Draw blocked tiles
         for (const [coord, turns] of Object.entries(this.gameState.blocked_tiles || {})) {
             const [x, y] = coord.split(',').map(Number);
+            const renderY = (height - 1 - y) * this.cellSize;  // Flip Y axis
             this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            this.ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
+            this.ctx.fillRect(x * this.cellSize, renderY, this.cellSize, this.cellSize);
             
             // Draw X
             this.ctx.strokeStyle = '#ff0000';
             this.ctx.lineWidth = 3;
             const offset = 10;
             this.ctx.beginPath();
-            this.ctx.moveTo(x * this.cellSize + offset, y * this.cellSize + offset);
-            this.ctx.lineTo((x + 1) * this.cellSize - offset, (y + 1) * this.cellSize - offset);
-            this.ctx.moveTo((x + 1) * this.cellSize - offset, y * this.cellSize + offset);
-            this.ctx.lineTo(x * this.cellSize + offset, (y + 1) * this.cellSize - offset);
+            this.ctx.moveTo(x * this.cellSize + offset, renderY + offset);
+            this.ctx.lineTo((x + 1) * this.cellSize - offset, renderY + this.cellSize - offset);
+            this.ctx.moveTo((x + 1) * this.cellSize - offset, renderY + offset);
+            this.ctx.lineTo(x * this.cellSize + offset, renderY + this.cellSize - offset);
             this.ctx.stroke();
             
             // Draw turns remaining
@@ -488,17 +491,18 @@ class Game {
             this.ctx.font = 'bold 16px sans-serif';
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
-            this.ctx.fillText(turns.toString(), (x + 0.5) * this.cellSize, (y + 0.5) * this.cellSize);
+            this.ctx.fillText(turns.toString(), (x + 0.5) * this.cellSize, renderY + this.cellSize * 0.5);
         }
         
         // Draw highlights (subtle gray with border)
         for (const [x, y] of this.highlightedSquares) {
-            this.ctx.fillStyle = 'rgba(200, 200, 200, 0.2)';  // Very subtle gray
-            this.ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
+            const renderY = (height - 1 - y) * this.cellSize;  // Flip Y axis
+            this.ctx.fillStyle = 'rgba(200, 200, 200, 0.3)';  // Very subtle gray
+            this.ctx.fillRect(x * this.cellSize, renderY, this.cellSize, this.cellSize);
             // Add visible border
-            this.ctx.strokeStyle = 'rgba(178, 255, 204, 0.9)';
-            this.ctx.lineWidth = 3;
-            this.ctx.strokeRect(x * this.cellSize + 2, y * this.cellSize + 2, this.cellSize - 4, this.cellSize - 4);
+            this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.65)';
+            this.ctx.lineWidth = 1;
+            this.ctx.strokeRect(x * this.cellSize + 2, renderY + 2, this.cellSize - 4, this.cellSize - 4);
         }
         
         // Highlight opponent pieces for move opponent skill
@@ -507,11 +511,12 @@ class Game {
             for (const piece of this.gameState.pieces) {
                 if (opponentPieceIds.includes(piece.piece_id)) {
                     const [x, y] = piece.loc;
+                    const renderY = (height - 1 - y) * this.cellSize;  // Flip Y axis
                     this.ctx.fillStyle = 'rgba(255, 178, 217, 0.6)';  // Pink highlight
-                    this.ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
+                    this.ctx.fillRect(x * this.cellSize, renderY, this.cellSize, this.cellSize);
                     this.ctx.strokeStyle = 'rgba(255, 102, 178, 0.9)';
                     this.ctx.lineWidth = 3;
-                    this.ctx.strokeRect(x * this.cellSize + 2, y * this.cellSize + 2, this.cellSize - 4, this.cellSize - 4);
+                    this.ctx.strokeRect(x * this.cellSize + 2, renderY + 2, this.cellSize - 4, this.cellSize - 4);
                 }
             }
         }
@@ -519,25 +524,28 @@ class Game {
         // Highlight selected opponent
         if (this.selectedOpponent) {
             const [x, y] = this.selectedOpponent.loc;
+            const renderY = (height - 1 - y) * this.cellSize;  // Flip Y axis
             this.ctx.fillStyle = 'rgba(255, 153, 204, 0.7)';
-            this.ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
+            this.ctx.fillRect(x * this.cellSize, renderY, this.cellSize, this.cellSize);
             this.ctx.strokeStyle = 'rgba(255, 51, 153, 1.0)';
             this.ctx.lineWidth = 4;
-            this.ctx.strokeRect(x * this.cellSize + 4, y * this.cellSize + 4, this.cellSize - 8, this.cellSize - 8);
+            this.ctx.strokeRect(x * this.cellSize + 4, renderY + 4, this.cellSize - 8, this.cellSize - 8);
         }
         
         // Draw selected piece highlight
         if (this.selectedPiece) {
             const [x, y] = this.selectedPiece.loc;
+            const renderY = (height - 1 - y) * this.cellSize;  // Flip Y axis
             this.ctx.fillStyle = 'rgba(255, 255, 0, 0.4)';
-            this.ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
+            this.ctx.fillRect(x * this.cellSize, renderY, this.cellSize, this.cellSize);
         }
         
         // Draw pieces
         for (const piece of this.gameState.pieces) {
             const [x, y] = piece.loc;
+            const renderY = (height - 1 - y) * this.cellSize;  // Flip Y axis
             const centerX = (x + 0.5) * this.cellSize;
-            const centerY = (y + 0.5) * this.cellSize;
+            const centerY = renderY + (0.5 * this.cellSize);
             
             // Draw piece circle with tile color fill
             this.ctx.beginPath();
