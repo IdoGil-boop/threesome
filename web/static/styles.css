@@ -140,12 +140,51 @@ header h1 {
     font-size: 0.9rem;
 }
 
-.skill-item {
-    padding: 8px;
-    margin-bottom: 6px;
+.skill-container {
+    margin-bottom: 8px;
+}
+
+.skill-header {
+    padding: 10px;
     background: #f7f7f7;
     border-radius: 6px;
     border-left: 4px solid;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+}
+
+.skill-header:hover {
+    background: #eeeeee;
+}
+
+.skill-title {
+    font-weight: 600;
+}
+
+.expand-icon {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.skill-details {
+    padding: 10px;
+    padding-left: 20px;
+    background: #fafafa;
+    border-left: 4px solid #ddd;
+    border-radius: 0 0 6px 6px;
+    font-size: 0.85rem;
+}
+
+.skill-details.hidden {
+    display: none;
+}
+
+.intensity-level {
+    padding: 4px 0;
+    color: #555;
 }
 
 .help {
