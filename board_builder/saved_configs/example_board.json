@@ -1,0 +1,15 @@
+{
+  "w": 10,
+  "h": 10,
+  "num_of_pieces": 4,
+  "color_pallete": [
+    "RED",
+    "GREEN",
+    "BLUE"
+  ],
+  "player_colors": [
+    "WHITE",
+    "BLACK"
+  ],
+  "force_starting_tiles": null
+}

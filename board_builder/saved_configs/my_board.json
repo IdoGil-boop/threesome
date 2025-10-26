@@ -1,0 +1,23 @@
+{
+  "w": 8,
+  "h": 8,
+  "num_of_pieces": 3,
+  "color_pallete": [
+    "RED",
+    "GREEN",
+    "BLUE",
+    "YELLOW"
+  ],
+  "player_colors": [
+    "WHITE",
+    "BLACK"
+  ],
+  "force_starting_tiles": null,
+  "color_proportions": {
+    "RED": 0.25,
+    "GREEN": 0.25,
+    "BLUE": 0.25,
+    "YELLOW": 0.15,
+    "NONE": 0.09999999999999998
+  }
+}

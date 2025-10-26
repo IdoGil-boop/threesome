@@ -1,0 +1,30 @@
+# OS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Virtual envs
+venv/
+.venv/
+
+# Buildozer/Android
+.buildozer/
+bin/
+*.apk
+*.aab
+
+# PyInstaller/Build
+build/
+dist/
+*.spec
+
+# Editor/IDE
+.vscode/
+.idea/
+
+venv/
