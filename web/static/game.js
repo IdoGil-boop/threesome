@@ -421,22 +421,22 @@ class Game {
         overlay.classList.remove('hidden');
     }
     
-    // Color map matching Kivy app (soft/mild colors)
+    // Color map - medium intensity (between bold and very light)
     getColor(colorName) {
         const colorMap = {
-            'red': 'rgba(255, 178, 191, 0.4)',      // Soft rose pink
-            'green': 'rgba(178, 242, 204, 0.4)',    // Soft mint green
-            'blue': 'rgba(178, 217, 255, 0.4)',     // Soft sky blue
-            'yellow': 'rgba(255, 250, 178, 0.4)',   // Soft cream yellow
-            'purple': 'rgba(217, 191, 255, 0.4)',   // Soft lavender
-            'orange': 'rgba(255, 217, 178, 0.4)',   // Soft peach
-            'pink': 'rgba(255, 204, 230, 0.4)',     // Soft baby pink
-            'brown': 'rgba(230, 204, 178, 0.4)',    // Soft tan/beige
-            'gray': 'rgba(204, 204, 204, 0.4)',     // Light gray
-            'black': 'rgba(0, 0, 0, 0.4)',
-            'white': 'rgba(250, 250, 255, 0.4)'
+            'red': 'rgba(255, 102, 102, 0.6)',      // Medium red
+            'green': 'rgba(102, 255, 153, 0.6)',    // Medium green
+            'blue': 'rgba(102, 153, 255, 0.6)',     // Medium blue
+            'yellow': 'rgba(255, 255, 102, 0.6)',   // Medium yellow
+            'purple': 'rgba(204, 153, 255, 0.6)',   // Medium purple
+            'orange': 'rgba(255, 178, 102, 0.6)',   // Medium orange
+            'pink': 'rgba(255, 153, 204, 0.6)',     // Medium pink
+            'brown': 'rgba(204, 153, 102, 0.6)',    // Medium brown
+            'gray': 'rgba(170, 170, 170, 0.6)',     // Medium gray
+            'black': 'rgba(50, 50, 50, 0.6)',
+            'white': 'rgba(240, 240, 255, 0.6)'
         };
-        return colorMap[colorName] || 'rgba(217, 217, 217, 0.4)';
+        return colorMap[colorName] || 'rgba(180, 180, 180, 0.6)';
     }
     
     render() {
@@ -491,11 +491,11 @@ class Game {
             this.ctx.fillText(turns.toString(), (x + 0.5) * this.cellSize, (y + 0.5) * this.cellSize);
         }
         
-        // Draw highlights (cyan/yellow for better visibility)
+        // Draw highlights (subtle gray with border)
         for (const [x, y] of this.highlightedSquares) {
-            this.ctx.fillStyle = 'rgba(255, 255, 102, 0.5)';  // Yellow highlight
+            this.ctx.fillStyle = 'rgba(200, 200, 200, 0.2)';  // Very subtle gray
             this.ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
-            // Add border for extra visibility
+            // Add visible border
             this.ctx.strokeStyle = 'rgba(178, 255, 204, 0.9)';
             this.ctx.lineWidth = 3;
             this.ctx.strokeRect(x * this.cellSize + 2, y * this.cellSize + 2, this.cellSize - 4, this.cellSize - 4);
