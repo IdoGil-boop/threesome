@@ -9,6 +9,9 @@ class Game {
         this.selectedPiece = null;
         this.skillMode = false;
         this.highlightedSquares = [];
+        this.aiEnabled = true;  // AI enabled by default
+        this.aiPlayer = 1;      // AI plays as Player 1
+        this.aiThinking = false;
         
         // Canvas sizing
         this.cellSize = 60;
@@ -21,6 +24,7 @@ class Game {
     setupEventListeners() {
         document.getElementById('new-game-btn').addEventListener('click', () => this.newGame());
         document.getElementById('toggle-skill-btn').addEventListener('click', () => this.toggleSkillMode());
+        document.getElementById('toggle-ai-btn').addEventListener('click', () => this.toggleAI());
         document.getElementById('play-again-btn').addEventListener('click', () => this.newGame());
         this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
     }
@@ -33,7 +37,10 @@ class Game {
                 body: JSON.stringify({
                     width: 8,
                     height: 8,
-                    num_pieces: 3
+                    num_pieces: 3,
+                    ai_enabled: this.aiEnabled,
+                    ai_player: this.aiPlayer,
+                    ai_depth: 3
                 })
             });
             const data = await response.json();
@@ -42,6 +49,7 @@ class Game {
             this.selectedPiece = null;
             this.skillMode = false;
             this.highlightedSquares = [];
+            this.aiThinking = false;
             document.getElementById('winner-overlay').classList.add('hidden');
             this.updateUI();
             this.render();
@@ -59,8 +67,16 @@ class Game {
         this.render();
     }
     
+    toggleAI() {
+        this.aiEnabled = !this.aiEnabled;
+        this.updateUI();
+    }
+    
     async handleCanvasClick(e) {
-        if (!this.gameState || this.gameState.winner !== null) return;
+        if (!this.gameState || this.gameState.winner !== null || this.aiThinking) return;
+        
+        // Don't allow human to move if it's AI's turn
+        if (this.aiEnabled && this.gameState.turn === this.aiPlayer) return;
         
         const rect = this.canvas.getBoundingClientRect();
         const x = Math.floor((e.clientX - rect.left) / this.cellSize);
@@ -122,7 +138,8 @@ class Game {
                 return;
             }
             
-            this.gameState = await response.json();
+            const data = await response.json();
+            this.gameState = data.state;
             this.selectedPiece = null;
             this.highlightedSquares = [];
             this.updateUI();
@@ -130,6 +147,12 @@ class Game {
             
             if (this.gameState.winner !== null) {
                 this.showWinner();
+                return;
+            }
+            
+            // Check if AI should move
+            if (data.ai_should_move || (this.aiEnabled && this.gameState.turn === this.aiPlayer)) {
+                await this.makeAIMove();
             }
         } catch (error) {
             console.error('Error making move:', error);
@@ -137,10 +160,55 @@ class Game {
         }
     }
     
+    async makeAIMove() {
+        if (this.aiThinking || !this.aiEnabled) return;
+        
+        this.aiThinking = true;
+        this.updateUI();
+        
+        // Small delay so user can see the board
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        try {
+            const response = await fetch(`/api/game/${this.gameId}/ai_move`, {
+                method: 'POST'
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                console.error('AI move failed:', error);
+                this.aiThinking = false;
+                this.updateUI();
+                return;
+            }
+            
+            const data = await response.json();
+            this.gameState = data.state;
+            this.aiThinking = false;
+            this.updateUI();
+            this.render();
+            
+            if (this.gameState.winner !== null) {
+                this.showWinner();
+            }
+        } catch (error) {
+            console.error('Error making AI move:', error);
+            this.aiThinking = false;
+            this.updateUI();
+        }
+    }
+    
     updateUI() {
         if (!this.gameState) return;
         
-        document.getElementById('current-turn').textContent = `Player ${this.gameState.turn}`;
+        let turnText = `Player ${this.gameState.turn}`;
+        if (this.aiThinking) {
+            turnText += ' (AI Thinking...)';
+        } else if (this.aiEnabled && this.gameState.turn === this.aiPlayer) {
+            turnText += ' (AI)';
+        }
+        
+        document.getElementById('current-turn').textContent = turnText;
         document.getElementById('round').textContent = this.gameState.rounds;
         document.getElementById('mode').textContent = this.skillMode ? 'Skill Mode' : 'Normal';
         
@@ -149,6 +217,15 @@ class Game {
             skillBtn.classList.add('active');
         } else {
             skillBtn.classList.remove('active');
+        }
+        
+        const aiBtn = document.getElementById('toggle-ai-btn');
+        if (this.aiEnabled) {
+            aiBtn.classList.add('active');
+            aiBtn.textContent = 'AI: ON';
+        } else {
+            aiBtn.classList.remove('active');
+            aiBtn.textContent = 'AI: OFF';
         }
         
         // Update skills list

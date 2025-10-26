@@ -117,6 +117,21 @@ header h1 {
     background: #ed8936;
 }
 
+.btn-ai {
+    background: #9f7aea;
+    color: white;
+}
+
+.btn-ai:hover {
+    background: #805ad5;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(159, 122, 234, 0.4);
+}
+
+.btn-ai.active {
+    background: #9f7aea;
+}
+
 .skill-info {
     margin-bottom: 20px;
 }

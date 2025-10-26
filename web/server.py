@@ -17,17 +17,23 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from game.board import Board
 from game.entities import Color
+from game import create_ai_opponent
 
 app = FastAPI(title="Threesome Game API")
 
 # In-memory game sessions (use Redis/DB for production)
 games: Dict[str, Board] = {}
+# Track AI settings per game
+game_ai_settings: Dict[str, Dict[str, Any]] = {}
 
 class NewGameRequest(BaseModel):
     width: int = 8
     height: int = 8
     num_pieces: int = 3
     colors: Optional[List[str]] = None
+    ai_enabled: bool = True
+    ai_player: int = 1  # Which player is AI (0 or 1)
+    ai_depth: int = 3
 
 class MoveRequest(BaseModel):
     piece_id: int
@@ -99,9 +105,17 @@ def new_game(req: NewGameRequest):
     )
     games[game_id] = board
     
+    # Store AI settings
+    game_ai_settings[game_id] = {
+        "enabled": req.ai_enabled,
+        "player": req.ai_player,
+        "depth": req.ai_depth
+    }
+    
     return {
         "game_id": game_id,
-        "state": serialize_board(board)
+        "state": serialize_board(board),
+        "ai_settings": game_ai_settings[game_id]
     }
 
 @app.get("/api/game/{game_id}")
@@ -139,7 +153,13 @@ def make_move(game_id: str, move: MoveRequest):
     # Make the move
     board.apply(piece, target)
     
-    return serialize_board(board)
+    # Check if AI should move next
+    result = {"state": serialize_board(board)}
+    ai_settings = game_ai_settings.get(game_id, {})
+    if ai_settings.get("enabled") and board.turn == ai_settings.get("player") and board.winner(return_ids=True) is None:
+        result["ai_should_move"] = True
+    
+    return result
 
 @app.post("/api/game/{game_id}/skill_move")
 def make_skill_move(game_id: str, move: SkillMoveRequest):
@@ -187,7 +207,13 @@ def make_skill_move(game_id: str, move: SkillMoveRequest):
     # Apply skill
     board.color_skills.apply_skill(board, piece, actual_target)
     
-    return serialize_board(board)
+    # Check if AI should move next
+    result = {"state": serialize_board(board)}
+    ai_settings = game_ai_settings.get(game_id, {})
+    if ai_settings.get("enabled") and board.turn == ai_settings.get("player") and board.winner(return_ids=True) is None:
+        result["ai_should_move"] = True
+    
+    return result
 
 @app.get("/api/game/{game_id}/legal_moves/{piece_id}")
 def get_legal_moves(game_id: str, piece_id: int):
@@ -232,6 +258,75 @@ def get_skill_targets(game_id: str, piece_id: int):
     
     return {"targets": serializable_targets}
 
+@app.post("/api/game/{game_id}/ai_move")
+def make_ai_move(game_id: str):
+    """Make an AI move for the current player."""
+    if game_id not in games:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    board = games[game_id]
+    ai_settings = game_ai_settings.get(game_id, {})
+    
+    if not ai_settings.get("enabled"):
+        raise HTTPException(status_code=400, detail="AI is not enabled for this game")
+    
+    if board.turn != ai_settings.get("player"):
+        raise HTTPException(status_code=400, detail="Not AI's turn")
+    
+    if board.winner(return_ids=True) is not None:
+        raise HTTPException(status_code=400, detail="Game is already over")
+    
+    try:
+        # Create AI opponent
+        ai = create_ai_opponent(
+            board,
+            method='minimax',
+            depth=ai_settings.get("depth", 3)
+        )
+        
+        # Get best move
+        move_result = ai.find_best_move()
+        
+        if move_result is None:
+            # No valid moves found, pass turn
+            board.turn = 1 - board.turn
+            return {"state": serialize_board(board), "move_type": "pass"}
+        
+        # Handle different move types
+        if len(move_result) == 3:
+            # Skill move: (piece_id, target, 'skill')
+            piece_id, target, _ = move_result
+            piece = board.pieces[piece_id]
+            
+            # If target is (opponent_piece_id, coord), convert it to (opponent_piece, coord)
+            if isinstance(target, tuple) and len(target) == 2 and isinstance(target[0], int) and isinstance(target[1], tuple):
+                # MoveOpponent skill: target is (opponent_piece_id, (x, y))
+                opponent_piece_id, coord = target
+                opponent_piece = board.pieces[opponent_piece_id]
+                target = (opponent_piece, coord)
+            
+            board.color_skills.apply_skill(board, piece, target)
+            move_type = "skill"
+        elif len(move_result) == 2:
+            # Regular move: (piece_id, coord)
+            piece_id, coord = move_result
+            piece = board.pieces[piece_id]
+            board.apply(piece, coord)
+            move_type = "normal"
+        else:
+            raise HTTPException(status_code=500, detail="Invalid move format from AI")
+        
+        return {
+            "state": serialize_board(board),
+            "move_type": move_type,
+            "piece_id": piece_id
+        }
+    
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"AI error: {str(e)}")
+
 @app.delete("/api/game/{game_id}")
 def delete_game(game_id: str):
     """Delete a game session."""
@@ -239,6 +334,8 @@ def delete_game(game_id: str):
         raise HTTPException(status_code=404, detail="Game not found")
     
     del games[game_id]
+    if game_id in game_ai_settings:
+        del game_ai_settings[game_id]
     return {"message": "Game deleted"}
 
 # Serve static files
