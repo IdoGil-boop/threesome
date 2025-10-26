@@ -434,6 +434,7 @@ class Game {
             'pink': 'rgba(255, 153, 204, 0.6)',     // Medium pink
             'brown': 'rgba(204, 153, 102, 0.6)',    // Medium brown
             'gray': 'rgba(170, 170, 170, 0.6)',     // Medium gray
+            'cream': 'rgb(232, 212, 180, 1)',     // Medium cream
             'black': 'rgba(50, 50, 50, 0.6)',
             'white': 'rgba(240, 240, 255, 0.6)'
         };
@@ -547,23 +548,16 @@ class Game {
             const centerX = (x + 0.5) * this.cellSize;
             const centerY = renderY + (0.5 * this.cellSize);
             
-            // Draw piece circle with tile color fill
+            // Draw piece circle with brown/cream fill
             this.ctx.beginPath();
             this.ctx.arc(centerX, centerY, this.pieceRadius, 0, 2 * Math.PI);
-            this.ctx.fillStyle = piece.tile_color || '#888888';
+            this.ctx.fillStyle = piece.player === 1 ? 'rgb(139, 90, 43)' : 'rgb(232, 212, 180)';  // Brown for AI, cream for player
             this.ctx.fill();
             
-            // Draw border based on player
-            this.ctx.strokeStyle = piece.color || (piece.player === 0 ? 'white' : 'black');
-            this.ctx.lineWidth = 4;
+            // Draw border (darker version of fill)
+            this.ctx.strokeStyle = piece.player === 1 ? 'rgb(90, 60, 30)' : 'rgb(180, 160, 130)';
+            this.ctx.lineWidth = 3;
             this.ctx.stroke();
-            
-            // Draw piece ID
-            this.ctx.fillStyle = piece.player === 0 ? '#000000' : '#ffffff';
-            this.ctx.font = 'bold 14px sans-serif';
-            this.ctx.textAlign = 'center';
-            this.ctx.textBaseline = 'middle';
-            this.ctx.fillText(piece.piece_id.toString(), centerX, centerY);
         }
     }
 }
