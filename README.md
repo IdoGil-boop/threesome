@@ -49,6 +49,23 @@ Skills are automatically assigned to colors at the start of each game.
 
 ## Running the Game
 
+### 🌐 Web Version (Play in Browser!)
+
+```bash
+./start_web.sh
+# Then open http://localhost:8000 in your browser
+```
+
+The web version features:
+- ✨ Beautiful modern UI
+- 🎮 Full game functionality
+- 📱 Mobile-friendly
+- 🚀 No installation needed (just Python)
+
+See **[web/README.md](web/README.md)** for deployment options.
+
+### 🖥️ Desktop Version
+
 ```bash
 # Activate virtual environment
 source venv/bin/activate

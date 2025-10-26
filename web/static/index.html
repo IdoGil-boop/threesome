@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Threesome - Strategic Board Game</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎮 Threesome</h1>
+            <p class="subtitle">Strategic Board Game</p>
+        </header>
+
+        <div class="game-container">
+            <div class="game-info">
+                <div class="status-panel">
+                    <h3>Game Status</h3>
+                    <div class="status-item">
+                        <span class="label">Current Turn:</span>
+                        <span id="current-turn" class="value">Player 0</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">Round:</span>
+                        <span id="round" class="value">0</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">Mode:</span>
+                        <span id="mode" class="value">Normal</span>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button id="new-game-btn" class="btn btn-primary">New Game</button>
+                    <button id="toggle-skill-btn" class="btn btn-secondary">Toggle Skill Mode</button>
+                </div>
+
+                <div class="skill-info">
+                    <h3>Color Skills</h3>
+                    <div id="skills-list"></div>
+                </div>
+
+                <div class="help">
+                    <h3>How to Play</h3>
+                    <ul>
+                        <li><strong>Goal:</strong> Get one piece to opponent's side</li>
+                        <li><strong>Click</strong> a piece to select it</li>
+                        <li><strong>Click</strong> a highlighted square to move</li>
+                        <li><strong>Skill Mode:</strong> Use color-based abilities</li>
+                        <li><strong>Colors:</strong> Pieces take tile colors as they move</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="game-board">
+                <canvas id="game-canvas"></canvas>
+                <div id="winner-overlay" class="winner-overlay hidden">
+                    <div class="winner-content">
+                        <h2 id="winner-text"></h2>
+                        <button id="play-again-btn" class="btn btn-primary">Play Again</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/game.js"></script>
+</body>
+</html>
+
