@@ -131,8 +131,8 @@ def new_game(req: NewGameRequest):
     colors = None
     if req.colors:
         try:
-            colors = [Color(c.upper()) for c in req.colors]
-        except (ValueError, AttributeError) as e:
+            colors = [Color[c.upper()] for c in req.colors]
+        except (KeyError, AttributeError) as e:
             raise HTTPException(status_code=400, detail=f"Invalid color in palette: {req.colors} - {str(e)}")
     
     # Parse proportions if provided
@@ -141,18 +141,23 @@ def new_game(req: NewGameRequest):
         color_proportions = {}
         for color_str, proportion in req.proportions.items():
             try:
-                color_proportions[Color(color_str.upper())] = proportion
-            except (ValueError, AttributeError) as e:
+                color_proportions[Color[color_str.upper()]] = proportion
+            except (KeyError, AttributeError) as e:
                 raise HTTPException(status_code=400, detail=f"Invalid color in proportions: {color_str} - {str(e)}")
     
     # Parse force starting color if provided
-    # Default to None (Board will handle its own default)
+    # Explicitly check if it's None/null to override Board's default
     force_color = None
-    if req.force_starting_color and req.force_starting_color.lower() != 'none':
+    force_color_provided = False
+    if req.force_starting_color is not None and req.force_starting_color.lower() not in ['none', 'null']:
         try:
-            force_color = Color(req.force_starting_color.upper())
-        except (ValueError, AttributeError) as e:
+            force_color = Color[req.force_starting_color.upper()]
+            force_color_provided = True
+        except (KeyError, AttributeError) as e:
             raise HTTPException(status_code=400, detail=f"Invalid force starting color: {req.force_starting_color} - {str(e)}")
+    elif req.force_starting_color is not None:
+        # Explicitly set to None (override Board default)
+        force_color_provided = True
     
     try:
         # Build kwargs only with provided values
@@ -168,7 +173,8 @@ def new_game(req: NewGameRequest):
         if color_proportions is not None:
             board_kwargs["color_proportions"] = color_proportions
         
-        if force_color is not None:
+        # Always pass force_starting_tiles if it was explicitly provided (even if None)
+        if force_color_provided:
             board_kwargs["force_starting_tiles"] = force_color
         
         board = Board(**board_kwargs)

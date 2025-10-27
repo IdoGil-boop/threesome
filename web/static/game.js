@@ -17,6 +17,7 @@ class Game {
         this.gameStartTime = null;
         this.currentStreak = 0;
         this.streakActive = false;
+        this.lastGameConfig = null;  // Store last game configuration
         
         // Canvas sizing
         this.cellSize = 60;
@@ -28,10 +29,10 @@ class Game {
     }
     
     setupEventListeners() {
-        document.getElementById('new-game-btn').addEventListener('click', () => this.newGame());
+        document.getElementById('new-game-btn').addEventListener('click', () => this.newGame(this.lastGameConfig));
         document.getElementById('toggle-skill-btn').addEventListener('click', () => this.toggleSkillMode());
         document.getElementById('toggle-ai-btn').addEventListener('click', () => this.toggleAI());
-        document.getElementById('play-again-btn').addEventListener('click', () => this.newGame());
+        document.getElementById('play-again-btn').addEventListener('click', () => this.newGame(this.lastGameConfig));
         document.getElementById('save-score-btn').addEventListener('click', () => this.showSaveScoreModal());
         document.getElementById('back-to-menu-btn').addEventListener('click', () => this.showMenu());
         this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
@@ -249,15 +250,18 @@ class Game {
         // Get force starting color
         const forceColor = document.getElementById('force-starting-color').value;
         
-        this.showView('game');
-        await this.newGame({ 
+        // Create config object to store
+        const boardConfig = { 
             width, 
             height, 
             num_pieces: pieces,
             colors: colors,
             proportions: proportions,
             force_starting_color: forceColor === 'Random' ? null : forceColor
-        });
+        };
+        
+        this.showView('game');
+        await this.newGame(boardConfig);
     }
     
     async loadLeaderboard() {
@@ -296,29 +300,38 @@ class Game {
         }
     }
     
-    async newGame(customSettings = {}) {
+    async newGame(customSettings = null) {
         try {
             this.gameStartTime = Date.now();
             
+            // Use last config if no custom settings provided
+            const config = customSettings || this.lastGameConfig || {};
+            
             const settings = {
-                width: customSettings.width || 8,
-                height: customSettings.height || 8,
-                num_pieces: customSettings.num_pieces || 3,
+                width: config.width || 8,
+                height: config.height || 8,
+                num_pieces: config.num_pieces || 3,
                 ai_enabled: this.aiEnabled,
                 ai_player: this.aiPlayer,
                 ai_depth: 3
             };
             
             // Only add optional settings if they're actually provided
-            if (customSettings.colors) {
-                settings.colors = customSettings.colors;
+            if (config.colors) {
+                settings.colors = config.colors;
             }
-            if (customSettings.proportions) {
-                settings.proportions = customSettings.proportions;
+            if (config.proportions) {
+                settings.proportions = config.proportions;
             }
-            if (customSettings.force_starting_color) {
-                settings.force_starting_color = customSettings.force_starting_color;
+            if (config.force_starting_color !== undefined) {
+                settings.force_starting_color = config.force_starting_color;
+            } else {
+                // Explicitly pass None to avoid Board's default of RED
+                settings.force_starting_color = null;
             }
+            
+            // Store this configuration for next "New Game"
+            this.lastGameConfig = config;
             
             const response = await fetch('/api/new_game', {
                 method: 'POST',
