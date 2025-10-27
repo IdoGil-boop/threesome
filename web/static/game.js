@@ -13,13 +13,18 @@ class Game {
         this.aiEnabled = true;  // AI enabled by default
         this.aiPlayer = 1;      // AI plays as Player 1
         this.aiThinking = false;
+        this.playerName = null;
+        this.gameStartTime = null;
+        this.currentStreak = 0;
+        this.streakActive = false;
         
         // Canvas sizing
         this.cellSize = 60;
         this.pieceRadius = 20;
         
         this.setupEventListeners();
-        this.newGame();
+        this.setupNavigation();
+        // Don't auto-start game - show menu instead
     }
     
     setupEventListeners() {
@@ -27,23 +32,305 @@ class Game {
         document.getElementById('toggle-skill-btn').addEventListener('click', () => this.toggleSkillMode());
         document.getElementById('toggle-ai-btn').addEventListener('click', () => this.toggleAI());
         document.getElementById('play-again-btn').addEventListener('click', () => this.newGame());
+        document.getElementById('save-score-btn').addEventListener('click', () => this.showSaveScoreModal());
+        document.getElementById('back-to-menu-btn').addEventListener('click', () => this.showMenu());
         this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
     }
     
-    async newGame() {
+    setupNavigation() {
+        // Menu buttons
+        document.getElementById('start-game-btn').addEventListener('click', () => {
+            this.showView('game');
+            this.newGame();
+        });
+        
+        document.getElementById('leaderboard-btn').addEventListener('click', () => {
+            this.showView('leaderboard');
+            this.loadLeaderboard();
+        });
+        
+        document.getElementById('board-builder-btn').addEventListener('click', () => {
+            this.showView('board-builder');
+        });
+        
+        document.getElementById('instructions-btn').addEventListener('click', () => {
+            this.showView('instructions');
+        });
+        
+        // Back buttons
+        document.querySelectorAll('.back-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.showMenu());
+        });
+        
+        // Board builder
+        document.getElementById('create-board-btn').addEventListener('click', () => this.createCustomBoard());
+        document.getElementById('num-colors').addEventListener('change', () => this.updateColorFields());
+        
+        // Initialize board builder
+        this.availableColors = ['red', 'green', 'blue', 'yellow', 'purple', 'orange', 'pink', 'brown', 'gray'];
+        this.updateColorFields();
+    }
+    
+    showView(viewName) {
+        // Hide all views
+        document.getElementById('start-menu').classList.add('hidden');
+        document.getElementById('leaderboard-view').classList.add('hidden');
+        document.getElementById('instructions-view').classList.add('hidden');
+        document.getElementById('board-builder-view').classList.add('hidden');
+        document.getElementById('game-view').classList.add('hidden');
+        
+        // Show requested view
+        if (viewName === 'menu') {
+            document.getElementById('start-menu').classList.remove('hidden');
+        } else if (viewName === 'game') {
+            document.getElementById('game-view').classList.remove('hidden');
+        } else if (viewName === 'leaderboard') {
+            document.getElementById('leaderboard-view').classList.remove('hidden');
+        } else if (viewName === 'instructions') {
+            document.getElementById('instructions-view').classList.remove('hidden');
+        } else if (viewName === 'board-builder') {
+            document.getElementById('board-builder-view').classList.remove('hidden');
+        }
+    }
+    
+    showMenu() {
+        // Going back to menu ends the streak
+        if (this.streakActive && this.currentStreak > 0) {
+            this.currentStreak = 0;
+            this.streakActive = false;
+        }
+        this.showView('menu');
+    }
+    
+    updateColorFields() {
+        const numColors = parseInt(document.getElementById('num-colors').value);
+        const paletteContainer = document.getElementById('color-palette-container');
+        const proportionsContainer = document.getElementById('color-proportions-container');
+        const forceSelect = document.getElementById('force-starting-color');
+        
+        // Clear existing
+        paletteContainer.innerHTML = '';
+        proportionsContainer.innerHTML = '';
+        
+        // Default colors for each slot
+        const defaultColors = ['red', 'green', 'blue', 'yellow', 'purple', 'orange', 'pink', 'brown', 'gray'];
+        
+        // Create color palette dropdowns
+        for (let i = 0; i < numColors; i++) {
+            const row = document.createElement('div');
+            row.className = 'color-palette-row';
+            
+            const label = document.createElement('label');
+            label.textContent = `Color ${i + 1}:`;
+            row.appendChild(label);
+            
+            const select = document.createElement('select');
+            select.id = `color-${i}`;
+            select.className = 'color-select';
+            
+            this.availableColors.forEach(color => {
+                const option = document.createElement('option');
+                option.value = color;
+                option.textContent = color.charAt(0).toUpperCase() + color.slice(1);
+                if (color === defaultColors[i]) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+            
+            select.addEventListener('change', () => this.updateProportionsAndForce());
+            row.appendChild(select);
+            paletteContainer.appendChild(row);
+        }
+        
+        this.updateProportionsAndForce();
+    }
+    
+    updateProportionsAndForce() {
+        const numColors = parseInt(document.getElementById('num-colors').value);
+        const proportionsContainer = document.getElementById('color-proportions-container');
+        const forceSelect = document.getElementById('force-starting-color');
+        
+        // Clear proportions
+        proportionsContainer.innerHTML = '';
+        
+        // Get selected colors
+        const selectedColors = [];
+        for (let i = 0; i < numColors; i++) {
+            const select = document.getElementById(`color-${i}`);
+            if (select) {
+                selectedColors.push(select.value);
+            }
+        }
+        
+        // Create proportion inputs
+        const defaultProportion = (1.0 / numColors).toFixed(2);
+        selectedColors.forEach((color, index) => {
+            const row = document.createElement('div');
+            row.className = 'color-proportion-row';
+            
+            const label = document.createElement('label');
+            label.textContent = `${color.charAt(0).toUpperCase() + color.slice(1)}:`;
+            row.appendChild(label);
+            
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.id = `proportion-${color}`;
+            input.min = '0';
+            input.max = '1';
+            input.step = '0.1';
+            input.value = defaultProportion;
+            row.appendChild(input);
+            
+            proportionsContainer.appendChild(row);
+        });
+        
+        // Update force starting color options
+        forceSelect.innerHTML = '<option value="Random">Random</option>';
+        selectedColors.forEach(color => {
+            const option = document.createElement('option');
+            option.value = color;
+            option.textContent = color.charAt(0).toUpperCase() + color.slice(1);
+            forceSelect.appendChild(option);
+        });
+    }
+    
+    async createCustomBoard() {
+        const width = parseInt(document.getElementById('board-width').value);
+        const height = parseInt(document.getElementById('board-height').value);
+        const pieces = parseInt(document.getElementById('board-pieces').value);
+        const numColors = parseInt(document.getElementById('num-colors').value);
+        
+        // Validation
+        if (width < 3 || width > 20 || height < 3 || height > 20) {
+            alert('Board dimensions must be between 3 and 20');
+            return;
+        }
+        
+        if (pieces < 1 || pieces > 10) {
+            alert('Pieces must be between 1 and 10');
+            return;
+        }
+        
+        // Get selected colors
+        const colors = [];
+        for (let i = 0; i < numColors; i++) {
+            const select = document.getElementById(`color-${i}`);
+            if (select) {
+                colors.push(select.value);
+            }
+        }
+        
+        // Check for duplicates
+        const uniqueColors = new Set(colors);
+        if (uniqueColors.size !== colors.length) {
+            alert('Error: Duplicate colors detected. Each color must be unique.');
+            return;
+        }
+        
+        // Get proportions
+        const proportions = {};
+        let totalProportion = 0;
+        colors.forEach(color => {
+            const input = document.getElementById(`proportion-${color}`);
+            if (input) {
+                const value = parseFloat(input.value);
+                proportions[color] = value;
+                totalProportion += value;
+            }
+        });
+        
+        // Validate proportions
+        if (totalProportion > 1.0) {
+            alert(`Error: Color proportions sum to ${totalProportion.toFixed(2)}, which exceeds 1.0`);
+            return;
+        }
+        
+        // Get force starting color
+        const forceColor = document.getElementById('force-starting-color').value;
+        
+        this.showView('game');
+        await this.newGame({ 
+            width, 
+            height, 
+            num_pieces: pieces,
+            colors: colors,
+            proportions: proportions,
+            force_starting_color: forceColor === 'Random' ? null : forceColor
+        });
+    }
+    
+    async loadLeaderboard() {
+        const content = document.getElementById('leaderboard-content');
+        content.innerHTML = '<div class="loading">Loading...</div>';
+        
         try {
+            const response = await fetch('/api/leaderboard');
+            const data = await response.json();
+            
+            if (!data.scores || data.scores.length === 0) {
+                content.innerHTML = '<div class="loading">No streaks yet. Win games to start your streak!</div>';
+                return;
+            }
+            
+            let html = '';
+            data.scores.forEach((entry, index) => {
+                const rankClass = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : '';
+                const date = new Date(entry.timestamp).toLocaleDateString();
+                const streak = entry.streak || 0;
+                const streakLabel = streak === 1 ? 'win' : 'wins';
+                html += `
+                    <div class="leaderboard-entry">
+                        <div class="leaderboard-rank ${rankClass}">#${index + 1}</div>
+                        <div class="leaderboard-name">${entry.name}</div>
+                        <div class="leaderboard-score">🔥 ${streak} ${streakLabel}</div>
+                        <div class="leaderboard-date">${date}</div>
+                    </div>
+                `;
+            });
+            
+            content.innerHTML = html;
+        } catch (error) {
+            console.error('Error loading leaderboard:', error);
+            content.innerHTML = '<div class="loading">No streaks yet. Win games to start your streak!</div>';
+        }
+    }
+    
+    async newGame(customSettings = {}) {
+        try {
+            this.gameStartTime = Date.now();
+            
+            const settings = {
+                width: customSettings.width || 8,
+                height: customSettings.height || 8,
+                num_pieces: customSettings.num_pieces || 3,
+                ai_enabled: this.aiEnabled,
+                ai_player: this.aiPlayer,
+                ai_depth: 3
+            };
+            
+            // Only add optional settings if they're actually provided
+            if (customSettings.colors) {
+                settings.colors = customSettings.colors;
+            }
+            if (customSettings.proportions) {
+                settings.proportions = customSettings.proportions;
+            }
+            if (customSettings.force_starting_color) {
+                settings.force_starting_color = customSettings.force_starting_color;
+            }
+            
             const response = await fetch('/api/new_game', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    width: 8,
-                    height: 8,
-                    num_pieces: 3,
-                    ai_enabled: this.aiEnabled,
-                    ai_player: this.aiPlayer,
-                    ai_depth: 3
-                })
+                body: JSON.stringify(settings)
             });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Failed to create game');
+            }
+            
             const data = await response.json();
             this.gameId = data.game_id;
             this.gameState = data.state;
@@ -56,7 +343,7 @@ class Game {
             this.render();
         } catch (error) {
             console.error('Error creating new game:', error);
-            alert('Failed to create new game. Make sure the server is running.');
+            alert('Failed to create new game: ' + error.message);
         }
     }
     
@@ -418,8 +705,93 @@ class Game {
     showWinner() {
         const overlay = document.getElementById('winner-overlay');
         const text = document.getElementById('winner-text');
-        text.textContent = `🎉 Player ${this.gameState.winner} Wins! 🎉`;
+        
+        if (this.gameState.winner === 0) {
+            // Player won - continue or start streak
+            this.currentStreak++;
+            this.streakActive = true;
+            text.textContent = `🎉 You Win! 🎉\n🔥 Streak: ${this.currentStreak}`;
+        } else {
+            // Player lost - end streak
+            this.currentStreak = 0;
+            this.streakActive = false;
+            text.textContent = `💀 AI Wins! 💀\nStreak ended.`;
+        }
+        
         overlay.classList.remove('hidden');
+    }
+    
+    showSaveScoreModal() {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h3>Save Your Score</h3>
+                <input type="text" id="player-name-input" placeholder="Enter your name" maxlength="20">
+                <div class="modal-buttons">
+                    <button class="btn btn-primary" id="submit-score-btn">Submit</button>
+                    <button class="btn btn-secondary" id="cancel-score-btn">Cancel</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        const nameInput = document.getElementById('player-name-input');
+        nameInput.focus();
+        
+        const submitScore = async () => {
+            const name = nameInput.value.trim();
+            if (!name) {
+                alert('Please enter your name');
+                return;
+            }
+            
+            await this.saveScore(name);
+            document.body.removeChild(modal);
+        };
+        
+        document.getElementById('submit-score-btn').addEventListener('click', submitScore);
+        document.getElementById('cancel-score-btn').addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+        
+        nameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') submitScore();
+        });
+    }
+    
+    async saveScore(name) {
+        if (!this.gameState || this.gameState.winner !== 0) {
+            alert('You can only save streaks when you win!');
+            return;
+        }
+        
+        const gameTime = Math.floor((Date.now() - this.gameStartTime) / 1000);
+        this.playerName = name;  // Remember player name for streak continuation
+        
+        try {
+            const response = await fetch('/api/leaderboard', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name,
+                    score: this.currentStreak,  // Send streak as score
+                    rounds: this.gameState.rounds,
+                    time_seconds: gameTime
+                })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const streakLabel = this.currentStreak === 1 ? 'win' : 'wins';
+                alert(`Streak saved! 🔥 ${this.currentStreak} ${streakLabel}!\nPress "Play Again" to continue your streak!`);
+            } else {
+                alert('Failed to save streak');
+            }
+        } catch (error) {
+            console.error('Error saving streak:', error);
+            alert('Failed to save streak');
+        }
     }
     
     // Color map - medium intensity (between bold and very light)
@@ -473,23 +845,19 @@ class Game {
         for (const [coord, turns] of Object.entries(this.gameState.blocked_tiles || {})) {
             const [x, y] = coord.split(',').map(Number);
             const renderY = (height - 1 - y) * this.cellSize;  // Flip Y axis
-            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            
+            // Draw darker background overlay
+            this.ctx.fillStyle = 'rgba(128, 128, 140, 0.6)';
             this.ctx.fillRect(x * this.cellSize, renderY, this.cellSize, this.cellSize);
             
-            // Draw X
-            this.ctx.strokeStyle = '#ff0000';
+            // Draw red outline rectangle (matching Kivy style)
+            this.ctx.strokeStyle = 'rgba(255, 102, 110, 0.9)';
             this.ctx.lineWidth = 3;
-            const offset = 10;
-            this.ctx.beginPath();
-            this.ctx.moveTo(x * this.cellSize + offset, renderY + offset);
-            this.ctx.lineTo((x + 1) * this.cellSize - offset, renderY + this.cellSize - offset);
-            this.ctx.moveTo((x + 1) * this.cellSize - offset, renderY + offset);
-            this.ctx.lineTo(x * this.cellSize + offset, renderY + this.cellSize - offset);
-            this.ctx.stroke();
+            this.ctx.strokeRect(x * this.cellSize + 5, renderY + 5, this.cellSize - 10, this.cellSize - 10);
             
-            // Draw turns remaining
-            this.ctx.fillStyle = '#ffffff';
-            this.ctx.font = 'bold 16px sans-serif';
+            // Draw countdown number in bright red (matching Kivy style)
+            this.ctx.fillStyle = 'rgba(255, 51, 76, 1.0)';
+            this.ctx.font = `bold ${Math.floor(this.cellSize * 0.5)}px sans-serif`;
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             this.ctx.fillText(turns.toString(), (x + 0.5) * this.cellSize, renderY + this.cellSize * 0.5);
@@ -564,6 +932,8 @@ class Game {
 
 // Initialize game when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new Game();
+    const game = new Game();
+    // Show menu on start
+    game.showMenu();
 });
 

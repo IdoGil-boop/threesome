@@ -13,8 +13,150 @@
             <p class="subtitle">Strategic Board Game</p>
         </header>
 
-        <div class="game-container">
+        <!-- Start Menu -->
+        <div id="start-menu" class="menu-container">
+            <div class="menu-panel">
+                <h2>Main Menu</h2>
+                <div class="menu-buttons">
+                    <button id="start-game-btn" class="menu-btn">
+                        <span class="menu-btn-icon">🎮</span>
+                        <span class="menu-btn-text">Start Game</span>
+                    </button>
+                    <button id="leaderboard-btn" class="menu-btn">
+                        <span class="menu-btn-icon">🏆</span>
+                        <span class="menu-btn-text">Leaderboard</span>
+                    </button>
+                    <button id="board-builder-btn" class="menu-btn">
+                        <span class="menu-btn-icon">🛠️</span>
+                        <span class="menu-btn-text">Create Board</span>
+                    </button>
+                    <button id="instructions-btn" class="menu-btn">
+                        <span class="menu-btn-icon">📖</span>
+                        <span class="menu-btn-text">Instructions</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leaderboard View -->
+        <div id="leaderboard-view" class="view-container hidden">
+            <div class="view-panel">
+                <button class="back-btn">← Back to Menu</button>
+                <h2>🏆 Leaderboard</h2>
+                <div id="leaderboard-content" class="leaderboard-list">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions View -->
+        <div id="instructions-view" class="view-container hidden">
+            <div class="view-panel">
+                <button class="back-btn">← Back to Menu</button>
+                <h2>📖 How to Play</h2>
+                <div class="instructions-content">
+                    <section>
+                        <h3>🎯 Game Objective</h3>
+                        <p>Be the first player to move one of your pieces to the opposite side of the board.</p>
+                    </section>
+                    
+                    <section>
+                        <h3>🎲 Basic Rules</h3>
+                        <ul>
+                            <li><strong>Movement:</strong> Click your piece, then click a highlighted square to move</li>
+                            <li><strong>Colors:</strong> When you move to a tile, your piece takes on that tile's color</li>
+                            <li><strong>Turn-based:</strong> Players alternate turns</li>
+                            <li><strong>Winning:</strong> Get any piece to the opponent's starting row</li>
+                        </ul>
+                    </section>
+                    
+                    <section>
+                        <h3>✨ Skill Mode</h3>
+                        <p>Each color grants special abilities based on how many pieces of that color you have:</p>
+                        <ul>
+                            <li><strong>Move Extended:</strong> Move extra squares (2-4 based on intensity)</li>
+                            <li><strong>Move Opponent:</strong> Force opponent pieces to move</li>
+                            <li><strong>Block Tile:</strong> Temporarily block tiles (1-3 rounds)</li>
+                        </ul>
+                        <p>Intensity increases with more pieces of the same color (1x, 2x, 3x)</p>
+                    </section>
+                    
+                    <section>
+                        <h3>💡 Strategy Tips</h3>
+                        <ul>
+                            <li>Plan your path to collect colors that give you useful abilities</li>
+                            <li>Block opponent paths with Block Tile skill</li>
+                            <li>Use Move Extended to rush toward the goal</li>
+                            <li>Move Opponent can disrupt enemy strategies</li>
+                        </ul>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <!-- Board Builder View -->
+        <div id="board-builder-view" class="view-container hidden">
+            <div class="view-panel builder-panel">
+                <button class="back-btn">← Back to Menu</button>
+                <h2>🛠️ Create Custom Board</h2>
+                <div class="builder-content">
+                    <form id="board-builder-form">
+                        <div class="form-group">
+                            <label>Board Width:</label>
+                            <input type="number" id="board-width" min="3" max="20" value="8">
+                        </div>
+                        <div class="form-group">
+                            <label>Board Height:</label>
+                            <input type="number" id="board-height" min="3" max="20" value="8">
+                        </div>
+                        <div class="form-group">
+                            <label>Pieces per Player:</label>
+                            <input type="number" id="board-pieces" min="1" max="10" value="3">
+                        </div>
+                        <div class="form-group">
+                            <label>Number of Colors:</label>
+                            <select id="num-colors">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3" selected>3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h3>Color Palette</h3>
+                            <div id="color-palette-container"></div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h3>Color Proportions</h3>
+                            <p class="form-hint">Set proportion for each color (0.0 - 1.0). Gray fills remaining space.</p>
+                            <div id="color-proportions-container"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Force Starting Color:</label>
+                            <select id="force-starting-color">
+                                <option value="Random" selected>Random</option>
+                            </select>
+                        </div>
+                        
+                        <button type="button" id="create-board-btn" class="btn btn-primary">Create & Play</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game View -->
+        <div id="game-view" class="game-container hidden">
             <div class="game-info">
+                <button id="back-to-menu-btn" class="btn btn-secondary">← Main Menu</button>
+                
                 <div class="status-panel">
                     <h3>Game Status</h3>
                     <div class="status-item">
@@ -43,13 +185,11 @@
                 </div>
 
                 <div class="help">
-                    <h3>How to Play</h3>
+                    <h3>Quick Tips</h3>
                     <ul>
-                        <li><strong>Goal:</strong> Get one piece to opponent's side</li>
                         <li><strong>Click</strong> a piece to select it</li>
                         <li><strong>Click</strong> a highlighted square to move</li>
                         <li><strong>Skill Mode:</strong> Use color-based abilities</li>
-                        <li><strong>Colors:</strong> Pieces take tile colors as they move</li>
                     </ul>
                 </div>
             </div>
@@ -60,6 +200,7 @@
                     <div class="winner-content">
                         <h2 id="winner-text"></h2>
                         <button id="play-again-btn" class="btn btn-primary">Play Again</button>
+                        <button id="save-score-btn" class="btn btn-secondary">Save Score</button>
                     </div>
                 </div>
             </div>

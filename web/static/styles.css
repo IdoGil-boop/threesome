@@ -266,6 +266,361 @@ header h1 {
     50% { transform: translateY(-20px); }
 }
 
+/* Menu Styles */
+.menu-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 500px;
+}
+
+.menu-panel {
+    background: white;
+    border-radius: 20px;
+    padding: 50px 60px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    text-align: center;
+}
+
+.menu-panel h2 {
+    font-size: 2.5rem;
+    color: #667eea;
+    margin-bottom: 40px;
+}
+
+.menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 300px;
+}
+
+.menu-btn {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 30px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.3rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.menu-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+}
+
+.menu-btn-icon {
+    font-size: 2rem;
+}
+
+.menu-btn-text {
+    flex: 1;
+    text-align: left;
+}
+
+/* View Container Styles */
+.view-container {
+    min-height: 500px;
+}
+
+.view-panel {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.view-panel h2 {
+    color: #667eea;
+    margin-bottom: 25px;
+    font-size: 2rem;
+}
+
+.back-btn {
+    background: #e2e8f0;
+    color: #4a5568;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: all 0.3s;
+}
+
+.back-btn:hover {
+    background: #cbd5e0;
+    transform: translateX(-3px);
+}
+
+/* Instructions View */
+.instructions-content {
+    text-align: left;
+}
+
+.instructions-content section {
+    margin-bottom: 30px;
+}
+
+.instructions-content h3 {
+    color: #764ba2;
+    margin-bottom: 15px;
+    font-size: 1.4rem;
+}
+
+.instructions-content p {
+    line-height: 1.8;
+    color: #4a5568;
+    margin-bottom: 10px;
+}
+
+.instructions-content ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.instructions-content li {
+    padding: 8px 0;
+    padding-left: 30px;
+    position: relative;
+    line-height: 1.6;
+    color: #4a5568;
+}
+
+.instructions-content li:before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: #667eea;
+    font-weight: bold;
+}
+
+/* Leaderboard View */
+.leaderboard-list {
+    margin-top: 20px;
+}
+
+.leaderboard-entry {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    margin-bottom: 10px;
+    background: #f7f7f7;
+    border-radius: 8px;
+    transition: all 0.3s;
+}
+
+.leaderboard-entry:hover {
+    background: #eee;
+    transform: translateX(5px);
+}
+
+.leaderboard-rank {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #667eea;
+    min-width: 50px;
+    text-align: center;
+}
+
+.leaderboard-rank.gold {
+    color: #f59e0b;
+}
+
+.leaderboard-rank.silver {
+    color: #94a3b8;
+}
+
+.leaderboard-rank.bronze {
+    color: #c2410c;
+}
+
+.leaderboard-name {
+    flex: 1;
+    font-weight: 600;
+    color: #333;
+}
+
+.leaderboard-score {
+    font-size: 1.2rem;
+    color: #667eea;
+    font-weight: bold;
+}
+
+.leaderboard-date {
+    font-size: 0.9rem;
+    color: #888;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #888;
+    font-size: 1.1rem;
+}
+
+/* Board Builder View */
+.builder-panel {
+    max-width: 700px;
+}
+
+.builder-content {
+    padding: 20px 0;
+}
+
+#board-builder-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.form-group label {
+    flex: 1;
+    font-weight: 600;
+    color: #4a5568;
+    text-align: right;
+}
+
+.form-group input,
+.form-group select {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.form-section {
+    background: #f7f9fc;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.form-section h3 {
+    color: #667eea;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+.form-hint {
+    font-size: 0.9rem;
+    color: #718096;
+    margin-bottom: 15px;
+    font-style: italic;
+}
+
+.color-palette-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.color-palette-row label {
+    min-width: 70px;
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.color-palette-row select {
+    flex: 1;
+    padding: 8px;
+    border: 2px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.95rem;
+}
+
+.color-proportion-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.color-proportion-row label {
+    flex: 1;
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.color-proportion-row input {
+    flex: 1;
+    padding: 8px;
+    border: 2px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.95rem;
+}
+
+/* Hidden class */
+.hidden {
+    display: none !important;
+}
+
+/* Save Score Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    max-width: 400px;
+    width: 90%;
+}
+
+.modal-content h3 {
+    color: #667eea;
+    margin-bottom: 20px;
+}
+
+.modal-content input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    margin-bottom: 20px;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+}
+
 @media (max-width: 1024px) {
     .game-container {
         grid-template-columns: 1fr;
@@ -277,6 +632,14 @@ header h1 {
     
     .game-board {
         order: 1;
+    }
+    
+    .menu-panel {
+        padding: 30px 40px;
+    }
+    
+    .menu-buttons {
+        min-width: 250px;
     }
 }
 
